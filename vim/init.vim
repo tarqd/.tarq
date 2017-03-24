@@ -233,6 +233,43 @@ nnoremap <silent> k gk
 vnoremap < <gv
 vnoremap > >gv
 
+let g:deoplete#enable_at_startup = 1
+let g:deoplete#omni#functions = {}
+let g:deoplete#omni#functions.php = [ 'phpcomplete#CompletePHP' ]
+let g:deoplete#omni#functions.javascript = [
+  \ 'tern#Complete',
+  \ 'jspc#omni'
+  \] 
+" Use deoplete.
+  let g:tern_request_timeout = 1
+  let g:tern_show_signature_in_pum = '0'  " This do disable full signature type on autocomplete
+  
+  "Add extra filetypes
+  let g:tern#filetypes = [
+                  \ 'jsx',
+                  \ 'javascript.jsx',
+                  \ 'vue',
+                  \ ]
+
+let g:racer_cmd = "~/.cargo/bin/racer"
+set hidden
+au FileType rust nmap gd <Plug>(rust-def)
+au FileType rust nmap gs <Plug>(rust-def-split)
+au FileType rust nmap gx <Plug>(rust-def-vertical)
+au FileType rust nmap <leader>gd <Plug>(rust-doc)
+
+let g:sql_type_default = 'mysql'
+autocmd FileType eoz
+  \ setlocal
+    \ expandtab
+    \ foldmethod=syntax
+    \ shiftwidth=4
+    \ smarttab
+    \ softtabstop=0
+    \ tabstop=4
+
+autocmd Bufread,BufNewFile *.cfm,*.cfc set filetype=eoz noexpandtab
+
 " Required:
 set runtimepath+=~/.tarq/vim/dein.vim
 
@@ -257,40 +294,17 @@ if dein#load_state(expand('~/.tarq/vim/plugins'))
 
   " autocompletion
   call dein#add('Shougo/deoplete.nvim')
-  let g:deoplete#enable_at_startup = 1
-  let g:deoplete#omni#functions = {}
-  let g:deoplete#omni#functions.php = [ 'phpcomplete#CompletePHP' ]
-  let g:deoplete#omni#functions.javascript = [
-    \ 'tern#Complete',
-    \ 'jspc#omni'
-    \] 
+
 
 
   " javascript
   " call dein#add('ternjs/tern_for_vim')
   call dein#add('carlitux/deoplete-ternjs')
-  " Use deoplete.
-  let g:tern_request_timeout = 1
-  let g:tern_show_signature_in_pum = '0'  " This do disable full signature type on autocomplete
-  
-  "Add extra filetypes
-  let g:tern#filetypes = [
-                  \ 'jsx',
-                  \ 'javascript.jsx',
-                  \ 'vue',
-                  \ ]
   call dein#add('othree/jspc.vim')
 
 
   " rust
   call dein#add('racer-rust/vim-racer')
-  let g:racer_cmd = "~/.cargo/bin/racer"
-  set hidden
-  au FileType rust nmap gd <Plug>(rust-def)
-  au FileType rust nmap gs <Plug>(rust-def-split)
-  au FileType rust nmap gx <Plug>(rust-def-vertical)
-  au FileType rust nmap <leader>gd <Plug>(rust-doc)
-
 
   " go
   call dein#add('zchee/deoplete-go')
@@ -299,18 +313,7 @@ if dein#load_state(expand('~/.tarq/vim/plugins'))
 
   " coldufsion
   call dein#add('ernstvanderlinden/vim-coldfusion')
-  let g:sql_type_default = 'mysql'
-  autocmd FileType eoz
-    \ setlocal
-      \ expandtab
-      \ foldmethod=syntax
-      \ shiftwidth=4
-      \ smarttab
-      \ softtabstop=0
-      \ tabstop=4
-
-   autocmd Bufread,BufNewFile *.cfm,*.cfc set filetype=eoz noexpandtab
-
+  
   " other syntaxes
   call dein#add('Shougo/neco-vim')
   call dein#add('Shougo/neco-syntax')
@@ -325,7 +328,32 @@ if dein#load_state(expand('~/.tarq/vim/plugins'))
   call dein#add('Konfekt/FastFold')
 
   " autocomplete from open tmux panes (dope)
-  call dein#add('wellle/tmux-complete.vim')
+  call dein#add('wellle/tmux-complete.vim') 
+
+  "color 
+  "call dein#add("nanotech/jellybeans.vim")
+  call dein#add("flazz/vim-colorschemes")
+  " Required:
+  call dein#end()
+  call dein#save_state()
+endif
+  " denite key bindings
+call denite#custom#map(
+      \ 'insert',
+      \ '<UP>',
+      \ '<denite:move_to_previous_line>',
+      \ 'noremap'
+      \)
+call denite#custom#map(
+      \ 'insert',
+      \ '<DOWN>',
+      \ '<denite:move_to_next_line>',
+      \ 'noremap'
+      \)
+
+call denite#custom#var('file_rec', 'command',
+\ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
+exec 'colorscheme '.s:settings.colorscheme
   let g:tmuxcomplete#trigger = ''
 
 
@@ -356,31 +384,6 @@ if dein#load_state(expand('~/.tarq/vim/plugins'))
   " help
   nnoremap <silent> [denite]h :<C-u>Denite -toggle -auto-resize -buffer-name=help help <cr><c-u>
 
-
-  "color 
-  "call dein#add("nanotech/jellybeans.vim")
-  call dein#add("flazz/vim-colorschemes")
-  " Required:
-  call dein#end()
-  call dein#save_state()
-endif
-  " denite key bindings
-call denite#custom#map(
-      \ 'insert',
-      \ '<UP>',
-      \ '<denite:move_to_previous_line>',
-      \ 'noremap'
-      \)
-call denite#custom#map(
-      \ 'insert',
-      \ '<DOWN>',
-      \ '<denite:move_to_next_line>',
-      \ 'noremap'
-      \)
-
-call denite#custom#var('file_rec', 'command',
-\ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
-exec 'colorscheme '.s:settings.colorscheme
 " Required:
 filetype plugin indent on
 syntax enable
