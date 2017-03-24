@@ -176,7 +176,7 @@ source ~/.tarq/vim/mac.vim
     set guioptions-=T                                 "toolbar icons
 
     if s:is_macvim
-      set gfn=monoOne:h12
+      "set gfn=monoOne:h12
       set transparency=2
     endif
 
@@ -237,12 +237,12 @@ vnoremap > >gv
 set runtimepath+=~/.tarq/vim/dein.vim
 
 " Required:
-if dein#load_state('~/.tarq/vim/plugins')
-  call dein#begin('~/.tarq/vim/plugins')
+if dein#load_state(expand('~/.tarq/vim/plugins'))
+  call dein#begin(expand('~/.tarq/vim/plugins'))
 
   " Let dein manage dein
   " Required:
-  call dein#add('~/.tarq/vim/dein.vim')
+  call dein#add(expand('~/.tarq/vim/dein.vim'))
 
   " Add or remove your plugins here:
   "call dein#add('Shougo/neosnippet.vim')
@@ -330,8 +330,6 @@ if dein#load_state('~/.tarq/vim/plugins')
 
 
   " denite
-  call denite#custom#var('file_rec', 'command',
-  \ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
   nmap <space> [denite]
   nnoremap [denite] <nop>
 
@@ -358,36 +356,38 @@ if dein#load_state('~/.tarq/vim/plugins')
   " help
   nnoremap <silent> [denite]h :<C-u>Denite -toggle -auto-resize -buffer-name=help help <cr><c-u>
 
-  " denite key bindings
-  call denite#custom#map(
-        \ 'insert',
-        \ '<UP>',
-        \ '<denite:move_to_previous_line>',
-        \ 'noremap'
-        \)
-  call denite#custom#map(
-        \ 'insert',
-        \ '<DOWN>',
-        \ '<denite:move_to_next_line>',
-        \ 'noremap'
-        \)
 
   "color 
   "call dein#add("nanotech/jellybeans.vim")
   call dein#add("flazz/vim-colorschemes")
-  exec 'colorscheme '.s:settings.colorscheme
   " Required:
   call dein#end()
   call dein#save_state()
 endif
+  " denite key bindings
+call denite#custom#map(
+      \ 'insert',
+      \ '<UP>',
+      \ '<denite:move_to_previous_line>',
+      \ 'noremap'
+      \)
+call denite#custom#map(
+      \ 'insert',
+      \ '<DOWN>',
+      \ '<denite:move_to_next_line>',
+      \ 'noremap'
+      \)
 
+call denite#custom#var('file_rec', 'command',
+\ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
+exec 'colorscheme '.s:settings.colorscheme
 " Required:
 filetype plugin indent on
 syntax enable
 
 " If you want to install not installed plugins on startup.
-if dein#check_install()
-  call dein#install()
-endif
+"if dein#check_install()
+"  call dein#install()
+"endif
 
 "End dein Scripts-------------------------
