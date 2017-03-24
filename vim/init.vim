@@ -234,15 +234,15 @@ vnoremap < <gv
 vnoremap > >gv
 
 " Required:
-set runtimepath+=~/.tarq/vim/dein.vim/bin/repos/github.com/Shougo/dein.vim
+set runtimepath+=~/.tarq/vim/dein.vim
 
 " Required:
-if dein#load_state('~/.tarq/vim/dein.vim/bin')
-  call dein#begin('~/.tarq/vim/dein.vim/bin')
+if dein#load_state('~/.tarq/vim/plugins')
+  call dein#begin('~/.tarq/vim/plugins')
 
   " Let dein manage dein
   " Required:
-  call dein#add('~/.tarq/vim/dein.vim/bin/repos/github.com/Shougo/dein.vim')
+  call dein#add('~/.tarq/vim/dein.vim')
 
   " Add or remove your plugins here:
   "call dein#add('Shougo/neosnippet.vim')
@@ -373,7 +373,7 @@ if dein#load_state('~/.tarq/vim/dein.vim/bin')
         \)
 
   "color 
-  call dein#add("nanotech/jellybeans.vim")
+  "call dein#add("nanotech/jellybeans.vim")
   call dein#add("flazz/vim-colorschemes")
   exec 'colorscheme '.s:settings.colorscheme
   " Required:
@@ -386,8 +386,8 @@ filetype plugin indent on
 syntax enable
 
 " If you want to install not installed plugins on startup.
-"if dein#check_install()
-"  call dein#install()
-"endif
+if dein#check_install()
+  call dein#install()
+endif
 
 "End dein Scripts-------------------------
