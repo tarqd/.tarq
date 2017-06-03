@@ -8,7 +8,7 @@ let s:settings = {}
 let s:settings.default_indent = 2
 let s:settings.max_column = 120
 let s:settings.enable_cursorcolumn = 0
-if has('gui_running')
+if has('gui_running') || exists("neovim_dot_app")
   let s:settings.colorscheme = 'luna'
 else 
   let s:settings.colorscheme = 'luna-term'
@@ -71,7 +71,9 @@ source ~/.tarq/vim/mac.vim
   set viewoptions=folds,options,cursor,unix,slash     "unix/windows compatibility
   set encoding=utf-8                                  "set encoding for text
   if exists('$TMUX')
-    set ttymouse=xterm2                               " dragging support
+    if !has('neovim')
+      set ttymouse=xterm2                               " dragging support
+    endif
     set clipboard=
   else
     "set clipboard=unnamed                             "sync with OS clipboard
@@ -161,10 +163,9 @@ source ~/.tarq/vim/mac.vim
   autocmd WinLeave * setlocal nocursorline
   autocmd WinEnter * setlocal cursorline
   if has('conceal')
-    set conceallevel=1
+    set conceallevel=2
     set listchars+=conceal:Δ
   endif
-
   if has('gui_running')
     " open maximized
     "set lines=999 columns=9999
@@ -194,11 +195,11 @@ source ~/.tarq/vim/mac.vim
     if $TERM_PROGRAM == 'iTerm.app'
       " different cursors for insert vs normal mode
       if exists('$TMUX')
-        let &t_SI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=1\x7\<Esc>\\"
-        let &t_EI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=0\x7\<Esc>\\"
+        let &t_SI = "\<Esc>Ptmux;\<Esc>\<Esc>]1337;CursorShape=1\x7\<Esc>\\"
+        let &t_EI = "\<Esc>Ptmux;\<Esc>\<Esc>]1337;CursorShape=0\x7\<Esc>\\"
       else
-        let &t_SI = "\<Esc>]50;CursorShape=1\x7"
-        let &t_EI = "\<Esc>]50;CursorShape=0\x7"
+        let &t_SI = "\<Esc>]1337;CursorShape=1\x7"
+        let &t_EI = "\<Esc>]1337;CursorShape=0\x7"
       endif
     endif
   endif
@@ -270,6 +271,7 @@ autocmd FileType eoz
 
 autocmd Bufread,BufNewFile *.cfm,*.cfc set filetype=eoz noexpandtab
 
+
 " Required:
 set runtimepath+=~/.tarq/vim/dein.vim
 
@@ -279,7 +281,7 @@ if dein#load_state(expand('~/.tarq/vim/plugins'))
 
   " Let dein manage dein
   " Required:
-  call dein#add(expand('~/.tarq/vim/dein.vim'))
+  call dein#add('Shougo/dein.vim')
 
   " Add or remove your plugins here:
   "call dein#add('Shougo/neosnippet.vim')
@@ -288,9 +290,14 @@ if dein#load_state(expand('~/.tarq/vim/plugins'))
   " You can specify revision/branch/tag.
   " call dein#add('Shougo/vimshell', { 'rev': '3787e5' })
   " call dein#add('Shougo/vimshell')
-
+  call dein#add('scrooloose/nerdtree')
+  call dein#add('Xuyuanp/nerdtree-git-plugin')
+  call dein#add('pearofducks/ansible-vim')
+  call dein#add('aquach/vim-http-client')
   " unity is dead, long live denite
   call dein#add('Shougo/denite.nvim')
+  " AutoSaveToggle
+  call dein#add('vim-scripts/vim-auto-save')
 
   " autocompletion
   call dein#add('Shougo/deoplete.nvim')
@@ -305,6 +312,7 @@ if dein#load_state(expand('~/.tarq/vim/plugins'))
 
   " rust
   call dein#add('racer-rust/vim-racer')
+  call dein#add('rust-lang/rust.vim')
 
   " go
   call dein#add('zchee/deoplete-go')
@@ -362,8 +370,9 @@ exec 'colorscheme '.s:settings.colorscheme
   nnoremap [denite] <nop>
 
   " search files and buffers
-  nnoremap <silent> [denite]<space> :<C-u>Denite -toggle -auto-resize -buffer-name=mixed file_rec buffer <cr><c-u>
-  nnoremap <silent> [denite]p<space> :<C-u>DeniteProjectDir -toggle -auto-resize -buffer-name=project file_rec <cr><c-u>
+  nnoremap <silent> [denite]<space> :<C-u>Denite  -auto-resize -resume -buffer-name=mixed file_rec buffer <cr><c-u>
+  nnoremap <silent> [denite]b :<C-u>Denite  -auto-resize -resume -buffer-name=mixed buffer <cr><c-u>
+  nnoremap <silent> [denite]p<space> :<C-u>DeniteProjectDir  -resume -auto-resize -buffer-name=project file_rec <cr><c-u>
 
   " grep
   nnoremap <silent> [denite]g :<C-u>Denite -auto-resize -buffer-name=grep grep:.:! <cr><c-u>
@@ -371,26 +380,35 @@ exec 'colorscheme '.s:settings.colorscheme
   nnoremap <silent> [denite]bg :<C-u>DeniteBufferDir -auto-resize -buffer-name=grep grep:.:! <cr><c-u>
 
   " search directories
-  nnoremap <silent> [denite]d :<C-u>Denite -toggle -auto-resize -buffer-name=directories directory_rec <cr><c-u>
-  nnoremap <silent> [denite]pd :<C-u>DeniteProjectDir -toggle -auto-resize -buffer-name=project directory_rec <cr><c-u>
+  nnoremap <silent> [denite]d :<C-u>Denite  -auto-resize -resume -buffer-name=directories directory_rec <cr><c-u>
+  nnoremap <silent> [denite]pd :<C-u>DeniteProjectDir  -auto-resize -resume -buffer-name=project directory_rec <cr><c-u>
 
   " change colorscheme 
-  nnoremap <silent> [denite]c :<C-u>Denite -toggle -auto-resize -buffer-name=colorscheme colorscheme <cr><c-u>
+  nnoremap <silent> [denite]c :<C-u>Denite  -auto-resize -resume --buffer-name=colorscheme colorscheme <cr><c-u>
   " find in file
-  nnoremap <silent> [denite]f :<C-u>Denite -toggle -auto-resize -buffer-name=lines line <cr><c-u>
-  nnoremap <silent> [denite]wf :<C-u>DeniteCursorWord -toggle -auto-resize -buffer-name=lines line <cr><c-u>
-  nnoremap <silent> [denite]o :<C-u>Denite -toggle -auto-resize -buffer-name=outline outline <cr><c-u>
+  nnoremap <silent> [denite]f :<C-u>Denite  -auto-resize -buffer-name=lines line <cr><c-u>
+  nnoremap <silent> [denite]wf :<C-u>DeniteCursorWord  -auto-resize -buffer-name=lines line <cr><c-u>
+  nnoremap <silent> [denite]o :<C-u>Denite  -auto-resize -buffer-name=outline outline <cr><c-u>
 
   " help
-  nnoremap <silent> [denite]h :<C-u>Denite -toggle -auto-resize -buffer-name=help help <cr><c-u>
+  nnoremap <silent> [denite]h :<C-u>Denite  -auto-resize -buffer-name=help help <cr><c-u>
+
+  " registers
+  nnoremap <silent> [denite]r :<C-u>Denite  -auto-resize -buffer-name=registers register <cr><c-u>
+
+  " nerd tree
+  nnoremap <silent> [denite]t :<C-u>NERDTreeToggle<cr><c-u>
+  "map <C-n> 
+
+  nnoremap <silent> [denite]s :<C-u>AutoSaveToggle<cr><c-u>
+
 
 " Required:
 filetype plugin indent on
 syntax enable
 
 " If you want to install not installed plugins on startup.
-"if dein#check_install()
-"  call dein#install()
-"endif
-
+if dein#check_install()
+  call dein#install()
+endif
 "End dein Scripts-------------------------
