@@ -2,6 +2,7 @@
 if &compatible
   set nocompatible               " Be iMproved
 endif
+filetype plugin indent on
 
  " initialize default settings
 let s:settings = {}
@@ -13,8 +14,7 @@ if has('gui_running') || exists("neovim_dot_app")
 else 
   let s:settings.colorscheme = 'luna-term'
 endif
-
-
+set background=dark
 " detect OS {{{
   let s:is_windows = has('win32') || has('win64')
   let s:is_cygwin = has('win32unix')
@@ -22,7 +22,19 @@ endif
 "}}}
 
 source ~/.tarq/vim/mac.vim
+let g:indent_guides_enable_on_vim_startup = 0
+let g:indent_guides_auto_colors = 0
+"let g:indent_guides_guide_size = 1
+let g:indent_guides_start_level = 2
+autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd ctermfg=0 ctermbg=234 guifg=grey15 guibg=grey30
+autocmd VimEnter,Colorscheme * :hi IndentGuidesEven ctermfg=0 ctermbg=235 guifg=grey30 guibg=grey1
 
+autocmd FileType sls call SetupIndentGuides()
+autocmd FileType yaml call SetupIndentGuides()
+autocmd FileType jinja call SetupIndentGuides()
+function SetupIndentGuides()
+  IndentGuidesEnable
+endfunction
 " functions {{{
   function! Preserve(command) "{{{
     " preparation: save last search, and cursor position.
@@ -234,7 +246,7 @@ nnoremap <silent> k gk
 vnoremap < <gv
 vnoremap > >gv
 
-let g:deoplete#enable_at_startup = 1
+let g:deoplete#enable_at_startup = 0
 let g:deoplete#omni#functions = {}
 let g:deoplete#omni#functions.php = [ 'phpcomplete#CompletePHP' ]
 let g:deoplete#omni#functions.javascript = [
@@ -258,6 +270,7 @@ au FileType rust nmap gd <Plug>(rust-def)
 au FileType rust nmap gs <Plug>(rust-def-split)
 au FileType rust nmap gx <Plug>(rust-def-vertical)
 au FileType rust nmap <leader>gd <Plug>(rust-doc)
+au FileType rust setlocal expandtab
 
 let g:sql_type_default = 'mysql'
 autocmd FileType eoz
@@ -269,7 +282,9 @@ autocmd FileType eoz
     \ softtabstop=0
     \ tabstop=4
 
+
 autocmd Bufread,BufNewFile *.cfm,*.cfc set filetype=eoz noexpandtab
+autocmd BufRead,BufNewFile ~/.ssh/conf.d/*.conf set ft=sshconfig
 
 
 " Required:
@@ -282,10 +297,15 @@ if dein#load_state(expand('~/.tarq/vim/plugins'))
   " Let dein manage dein
   " Required:
   call dein#add('Shougo/dein.vim')
-
+  call dein#add('floobits/floobits-neovim')
+  call dein#add('dag/vim-fish')
+  call dein#add('saltstack/salt-vim')
+  call dein#add('Glench/Vim-Jinja2-Syntax')
+  call dein#add('chr4/nginx.vim')
   " Add or remove your plugins here:
   "call dein#add('Shougo/neosnippet.vim')
   "call dein#add('Shougo/neosnippet-snippets')
+  call dein#add("nathanaelkane/vim-indent-guides")
 
   " You can specify revision/branch/tag.
   " call dein#add('Shougo/vimshell', { 'rev': '3787e5' })
@@ -313,6 +333,7 @@ if dein#load_state(expand('~/.tarq/vim/plugins'))
   " rust
   call dein#add('racer-rust/vim-racer')
   call dein#add('rust-lang/rust.vim')
+  call dein#add('cespare/vim-toml')
 
   " go
   call dein#add('zchee/deoplete-go')
@@ -360,8 +381,27 @@ call denite#custom#map(
       \)
 
 call denite#custom#var('file_rec', 'command',
-\ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
+ \ ['rg', '--files', '--glob', '!.git'])
+" \ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
+call denite#custom#var('grep', 'command', ['rg'])
+call denite#custom#var('grep', 'default_opts',
+      \ ['--hidden', '--vimgrep', '--no-heading', '-S'])
+call denite#custom#var('grep', 'recursive_opts', [])
+call denite#custom#var('grep', 'pattern_opt', ['--regexp'])
+call denite#custom#var('grep', 'separator', ['--'])
+call denite#custom#var('grep', 'final_opts', [])
+
+call denite#custom#map('insert', '<C-s>', '<denite:do_action:vsplit>',
+      \'noremap')
+call denite#custom#map('normal', '<C-s>', '<denite:do_action:vsplit>',
+      \'noremap')
+call denite#custom#map('insert', '<M-s>', '<denite:do_action:split>',
+      \'noremap')
+call denite#custom#map('normal', '<M-s>', '<denite:do_action:split>',
+      \'noremap')
+
 exec 'colorscheme '.s:settings.colorscheme
+set background=dark
   let g:tmuxcomplete#trigger = ''
 
 
@@ -370,9 +410,9 @@ exec 'colorscheme '.s:settings.colorscheme
   nnoremap [denite] <nop>
 
   " search files and buffers
-  nnoremap <silent> [denite]<space> :<C-u>Denite  -auto-resize -resume -buffer-name=mixed file_rec buffer <cr><c-u>
-  nnoremap <silent> [denite]b :<C-u>Denite  -auto-resize -resume -buffer-name=mixed buffer <cr><c-u>
-  nnoremap <silent> [denite]p<space> :<C-u>DeniteProjectDir  -resume -auto-resize -buffer-name=project file_rec <cr><c-u>
+  nnoremap <silent> [denite]<space> :<C-u>Denite  -auto-resize -auto-resume -buffer-name=mixed file_rec buffer <cr><c-u>
+  nnoremap <silent> [denite]b :<C-u>Denite  -auto-resize -auto-resume -buffer-name=mixed buffer <cr><c-u>
+  nnoremap <silent> [denite]p :<C-u>DeniteProjectDir  -auto-resume -auto-resize -buffer-name=project file_rec <cr><c-u>
 
   " grep
   nnoremap <silent> [denite]g :<C-u>Denite -auto-resize -buffer-name=grep grep:.:! <cr><c-u>
@@ -380,11 +420,11 @@ exec 'colorscheme '.s:settings.colorscheme
   nnoremap <silent> [denite]bg :<C-u>DeniteBufferDir -auto-resize -buffer-name=grep grep:.:! <cr><c-u>
 
   " search directories
-  nnoremap <silent> [denite]d :<C-u>Denite  -auto-resize -resume -buffer-name=directories directory_rec <cr><c-u>
-  nnoremap <silent> [denite]pd :<C-u>DeniteProjectDir  -auto-resize -resume -buffer-name=project directory_rec <cr><c-u>
+  nnoremap <silent> [denite]d :<C-u>Denite  -auto-resize -auto-resume -buffer-name=directories directory_rec <cr><c-u>
+  nnoremap <silent> [denite]pd :<C-u>DeniteProjectDir  -auto-resize -auto-resume -buffer-name=project directory_rec <cr><c-u>
 
   " change colorscheme 
-  nnoremap <silent> [denite]c :<C-u>Denite  -auto-resize -resume --buffer-name=colorscheme colorscheme <cr><c-u>
+  nnoremap <silent> [denite]c :<C-u>Denite  -auto-resize -auto-resume -buffer-name=colorscheme colorscheme <cr><c-u>
   " find in file
   nnoremap <silent> [denite]f :<C-u>Denite  -auto-resize -buffer-name=lines line <cr><c-u>
   nnoremap <silent> [denite]wf :<C-u>DeniteCursorWord  -auto-resize -buffer-name=lines line <cr><c-u>
