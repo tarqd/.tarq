@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="${GIT_CLONE_ROOT:-$HOME/src}"
+DEFAULT_HOST="${GIT_DEFAULT_HOST:-github.com}"
+
+usage() {
+  cat >&2 <<'USAGE'
+usage:
+  git get [--print-completions bash|zsh|fish] <repo-ish> [git clone args...]
+
+repo-ish forms supported:
+  1) org/repo                      (assumes github.com via SSH)
+  2) host/org/repo                 (SSH to that host)
+  3) git@host:full/path/repo(.git) (scp-like SSH)
+  4) ssh://[user@]host[:port]/full/path/repo(.git)
+  5) https://host/full/path/repo(.git)
+     http://host/full/path/repo(.git)
+     git://host/full/path/repo(.git)
+
+destination layout:
+  $GIT_CLONE_ROOT/<host>/<full/path/repo>   (full path preserved)
+
+env:
+  GIT_CLONE_ROOT    (default: ~/src)
+  GIT_DEFAULT_HOST  (default: github.com)
+
+examples:
+  git get org/repo --depth 1
+  git get github.myco.com/org/repo --filter=blob:none
+  git get https://gitlab.com/group/subgroup/repo --depth 1
+  git get git@github.com:org/repo.git --recurse-submodules
+USAGE
+}
+
+print_completions() {
+  local shell="${1:-}"
+  case "$shell" in
+    fish)
+      cat <<'FISH'
+# Fish: ~/.config/fish/completions/git-get.fish
+# Make `git get` complete like `git clone`
+complete -c git -n "__fish_git_using_command get" -w clone
+FISH
+      ;;
+    bash)
+      cat <<'BASH'
+# Bash: add to ~/.bashrc AFTER sourcing git-completion.bash
+_git_get() { _git_clone; }
+BASH
+      ;;
+    zsh)
+      cat <<'ZSH'
+# Zsh: add to ~/.zshrc (works with many common git completion setups)
+_git-get() { _git-clone "$@"; }
+compdef _git-get get 2>/dev/null || true
+ZSH
+      ;;
+    *)
+      echo "unknown shell: $shell (expected bash|zsh|fish)" >&2
+      exit 2
+      ;;
+  esac
+}
+
+# Meta flag
+if [ $# -ge 1 ] && [ "$1" = "--print-completions" ]; then
+  shift
+  print_completions "${1:-}"
+  exit 0
+fi
+
+if [ $# -lt 1 ]; then
+  usage
+  exit 2
+fi
+
+input="$1"; shift
+clone_args=("$@")
+
+# Helpers
+strip_git_suffixes() {
+  local p="$1"
+  p="${p%/}"
+  p="${p%.git}"
+  printf "%s" "$p"
+}
+
+fail() {
+  echo "git get: $1" >&2
+  echo >&2
+  usage
+  exit 2
+}
+
+host=""
+fullpath=""
+url=""
+
+# Shorthand: org/repo or host/org/repo
+if [[ "$input" != *"://"* && "$input" != *@* && "$input" != *:* ]]; then
+  if [[ "$input" == */* ]]; then
+    IFS='/' read -r a b c rest <<<"$input"
+    if [[ -n "${rest:-}" ]]; then
+      fail "too many path segments for shorthand '$input' (use a full URL instead)"
+    fi
+
+    if [[ -n "${c:-}" ]]; then
+      # host/org/repo
+      host="$a"
+      fullpath="$(strip_git_suffixes "$b/$c")"
+      url="git@$host:$fullpath.git"
+    else
+      # org/repo
+      host="$DEFAULT_HOST"
+      fullpath="$(strip_git_suffixes "$a/$b")"
+      url="git@$host:$fullpath.git"
+    fi
+  else
+    fail "unrecognized input '$input'"
+  fi
+
+# scp-like SSH: user@host:path
+elif [[ "$input" == *@*:* && "$input" != *"://"* ]]; then
+  url="$input"
+  host="${input#*@}"; host="${host%%:*}"
+  fullpath="${input#*:}"
+  fullpath="$(strip_git_suffixes "$fullpath")"
+  [[ -n "$host" && -n "$fullpath" ]] || fail "could not parse scp-like SSH URL '$input'"
+
+# scheme URLs: ssh://, https://, http://, git://
+elif [[ "$input" == *"://"* ]]; then
+  url="$input"
+
+  # Extract authority+path
+  tmp="${input#*://}"     # remove scheme://
+  tmp="${tmp#*@}"         # remove optional user@
+  authority="${tmp%%/*}"  # host[:port]
+  path="${tmp#*/}"
+
+  [[ "$authority" != "$tmp" ]] || fail "URL '$input' has no path"
+
+  host="${authority%%:*}" # drop :port for directory layout
+  fullpath="$(strip_git_suffixes "$path")"
+  [[ -n "$host" && -n "$fullpath" ]] || fail "could not parse URL '$input'"
+
+else
+  fail "unrecognized input '$input'"
+fi
+
+# Fail fast on clearly bad results
+if [[ "$host" == "local" || "$host" == "." || "$host" == "/" ]]; then
+  fail "refusing to infer host for '$input'"
+fi
+if [[ "$fullpath" == *".."* || "$fullpath" == /* ]]; then
+  fail "refusing suspicious path '$fullpath'"
+fi
+
+dest="$ROOT/$host/$fullpath"
+mkdir -p "$(dirname "$dest")"
+
+if [ -e "$dest" ]; then
+  echo "exists: $dest" >&2
+else
+  echo "→ cloning to $dest" >&2
+  git clone "$url" "$dest" "${clone_args[@]}"
+fi
+
+# Print destination for convenience (lets you: cd "$(git get ...)")
+echo "$dest"
