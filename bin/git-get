@@ -160,9 +160,8 @@ dest="$ROOT/$host/$fullpath"
 mkdir -p "$(dirname "$dest")"
 
 if [ -e "$dest" ]; then
-  echo "exists: $dest" >&2
+  # don't need to do anything
 else
-  echo "→ cloning to $dest" >&2
   git clone "$url" "$dest" "${clone_args[@]}"
 fi
 
