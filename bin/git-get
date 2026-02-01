@@ -160,7 +160,7 @@ dest="$ROOT/$host/$fullpath"
 mkdir -p "$(dirname "$dest")"
 
 if [ ! -e "$dest" ]; then
-  git clone "$url" "$dest" "${clone_args[@]}"
+  git clone "$url" "$dest" "${clone_args[@]+"${clone_args[@]}"}"
 fi
 
 # Print destination for convenience (lets you: cd "$(git get ...)")
