@@ -159,9 +159,7 @@ fi
 dest="$ROOT/$host/$fullpath"
 mkdir -p "$(dirname "$dest")"
 
-if [ -e "$dest" ]; then
-  # don't need to do anything
-else
+if [ ! -e "$dest" ]; then
   git clone "$url" "$dest" "${clone_args[@]}"
 fi
 
