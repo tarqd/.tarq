@@ -159,8 +159,10 @@ fi
 dest="$ROOT/$host/$fullpath"
 mkdir -p "$(dirname "$dest")"
 
-if [ ! -e "$dest" ]; then
-  git clone "$url" "$dest" "${clone_args[@]+"${clone_args[@]}"}"
+if [ -e "$dest" ]; then
+  #echo "exists: $dest" >&2
+else
+  git clone "$url" "$dest" "${clone_args[@]}"
 fi
 
 # Print destination for convenience (lets you: cd "$(git get ...)")
